@@ -1,7 +1,7 @@
 {
     "Author": "Dennes Torres",
     "ContentSize": 8968,
-    "ContentUrl": "https://raw.githubusercontent.com/azureautomation/indexes-tables-in-an-azure-database-if-they-have-a-high-fragmentation/master/Update-SQLIndexRunbook.ps1",
+    "ContentUrl": "https://raw.githubusercontent.com/dennestorres/ReIndex-AzureSQL-Tables-When-Needed/master/Update-SQLIndexRunbook.ps1",
     "DownloadCount": 13844,
     "Id": "Indexes-tables-in-an-Azure-73a2a8ea",
     "IsFederated": true,
