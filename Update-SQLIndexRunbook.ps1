@@ -130,10 +130,8 @@ workflow Update-SQLIndexRunbook
             {
                 # Table is fragmented. Return this table for indexing by finding its name
 
-                $FragTable.Item("schemaName")  + "." + $FragTable.Item("TableName")
-                    
-                
-
+                $result=$FragTable.Item("schemaName")  + "." + $FragTable.Item("TableName")
+                $result                
             }
         }
 
