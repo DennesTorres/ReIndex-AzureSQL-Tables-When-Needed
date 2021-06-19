@@ -49,8 +49,6 @@
     AUTHOR: System Center Automation Team
     LASTEDIT: Oct 8th, 2014 
 #>
-workflow Update-SQLIndexRunbook
-{
     param(
         [parameter(Mandatory=$True)]
         [string] $SqlServer,
@@ -219,4 +217,3 @@ workflow Update-SQLIndexRunbook
     }
 
     Write-Verbose "Finished Indexing"
-}
