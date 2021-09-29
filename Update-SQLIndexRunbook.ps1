@@ -83,10 +83,12 @@
     $SqlUsername = $SqlCredential.UserName 
     $SqlPass = $SqlCredential.GetNetworkCredential().Password
     
-    $TableNames = Inlinescript {
+    
+    $TableNames = @()
+  
       
         # Define the connection to the SQL Database
-        $Conn = New-Object System.Data.SqlClient.SqlConnection("Server=tcp:$using:SqlServer,$using:SqlServerPort;Database=$using:Database;User ID=$using:SqlUsername;Password=$using:SqlPass;Trusted_Connection=False;Encrypt=True;Connection Timeout=30;")
+        $Conn = New-Object System.Data.SqlClient.SqlConnection("Server=tcp:$($SqlServer),$($SqlServerPort);Database=$($Database);User ID=$($SqlUsername);Password=$($SqlPass);Trusted_Connection=False;Encrypt=True;Connection Timeout=30;")
          
         # Open the SQL connection
         $Conn.Open()
@@ -124,17 +126,17 @@
             Write-Verbose ("Table Object ID:" + $FragTable.Item("object_id"))
             Write-Verbose ("Fragmentation:" + $FragTable.Item("avg_fragmentation_in_percent"))
             
-            If ($FragTable.avg_fragmentation_in_percent -ge $Using:FragPercentage)
+            If ($FragTable.avg_fragmentation_in_percent -ge $FragPercentage)
             {
                 # Table is fragmented. Return this table for indexing by finding its name
 
                 $result=$FragTable.Item("schemaName")  + "." + $FragTable.Item("TableName")
-                $result                
+                $TableNames += ,$result               
             }
         }
 
         $Conn.Close()
-    }
+    
 
     # If a specific table was specified, then find this table if it needs to indexed, otherwise
     # set the TableNames to $null since we shouldn't process any other tables.
@@ -157,17 +159,16 @@
     ForEach ($TableName in $TableNames)
     {
       Write-Verbose "Creating checkpoint"
-      Checkpoint-Workflow
+      
       Write-Verbose "Indexing Table $TableName..."
       
-      InlineScript {
           
         $SQLCommandString = @"
-        EXEC('ALTER INDEX ALL ON $Using:TableName REBUILD with (ONLINE=ON)')
+        EXEC('ALTER INDEX ALL ON $($TableName) REBUILD with (ONLINE=ON)')
 "@
 
         # Define the connection to the SQL Database
-        $Conn = New-Object System.Data.SqlClient.SqlConnection("Server=tcp:$using:SqlServer,$using:SqlServerPort;Database=$using:Database;User ID=$using:SqlUsername;Password=$using:SqlPass;Trusted_Connection=False;Encrypt=True;Connection Timeout=30;")
+        $Conn = New-Object System.Data.SqlClient.SqlConnection("Server=tcp:$($SqlServer),$($SqlServerPort);Database=$($Database);User ID=$($SqlUsername);Password=$($SqlPass);Trusted_Connection=False;Encrypt=True;Connection Timeout=30;")
         
         # Open the SQL connection
         $Conn.Open()
@@ -184,14 +185,15 @@
             $Ds=New-Object system.Data.DataSet
             $Da=New-Object system.Data.SqlClient.SqlDataAdapter($Cmd)
             [void]$Da.fill($Ds)
+            Write-Verbose ("Building table $($TableName) online")
         }
         Catch
         {
-            if (($_.Exception -match "offline") -and ($Using:RebuildOffline) )
+            if (($_.Exception -match "offline") -and ($RebuildOffline) )
             {
-                Write-Verbose ("Building table $Using:TableName offline")
+                Write-Verbose ("Building table $($TableName) offline")
                 $SQLCommandString = @"
-                EXEC('ALTER INDEX ALL ON $Using:TableName REBUILD')
+                EXEC('ALTER INDEX ALL ON $($TableName) REBUILD')
 "@              
 
                 # Define the SQL command to run. 
@@ -208,12 +210,12 @@
             Else
             {
                 # Will catch the exception here so other tables can be processed.
-                Write-Error "Table $Using:TableName could not be indexed. Investigate indexing each index instead of the complete table $_"
+                Write-Error "Table $($TableName) could not be indexed. Investigate indexing each index instead of the complete table $_"
              }
         }
         # Close the SQL connection
         $Conn.Close()
       }  
-    }
 
     Write-Verbose "Finished Indexing"
+    
